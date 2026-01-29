@@ -520,10 +520,25 @@ async def download_output(run_id: UUID):
         # Extract filename from path
         file_name = output_path.split("/")[-1]
         
+        # Build summary from run_summary_json
+        summary = None
+        if run_summary:
+            summary = {
+                "total_payments": run_summary.get("total_raw_rows", 0),
+                "ready_to_pay": run_summary.get("ready_to_pay_rows", 0),
+                "on_hold": run_summary.get("payment_on_hold_rows", 0),
+                "holds": run_summary.get("hold_list_rows", 0)
+            }
+        
         return DownloadResponse(
             run_id=run_id,
             status=run_record["status"],
-            download_url=signed_url,
+            excel_file_url=signed_url,  # Frontend expects this field name
+            pdf_file_url=None,  # Not implemented yet
+            audit_trail_url=None,  # Not implemented yet
+            summary=summary,
+            audit_trail=None,  # Not implemented yet
+            download_url=signed_url,  # Keep for backward compatibility
             expires_in_seconds=expires_in,
             file_name=file_name,
             file_size_bytes=file_size

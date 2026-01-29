@@ -172,10 +172,17 @@ class DownloadResponse(BaseModel):
     """Response with signed download URL"""
     run_id: UUID
     status: str
-    download_url: str
-    expires_in_seconds: int
-    file_name: str
-    file_size_bytes: int
+    excel_file_url: str  # Main download URL (matches frontend expectation)
+    pdf_file_url: Optional[str] = None  # Optional PDF report
+    audit_trail_url: Optional[str] = None  # Optional audit trail file
+    summary: Optional[Dict[str, Any]] = None  # Run summary stats
+    audit_trail: Optional[List[Dict[str, Any]]] = None  # Audit trail entries
+    
+    # Additional metadata
+    download_url: Optional[str] = None  # Alias for excel_file_url (deprecated)
+    expires_in_seconds: Optional[int] = None
+    file_name: Optional[str] = None
+    file_size_bytes: Optional[int] = None
 
 
 # ============================================================================
