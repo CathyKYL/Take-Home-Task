@@ -46,10 +46,17 @@ from app.processing import (
     find_unmatched_holds,
     extract_unique_field_values,
     process_run,
-    generate_audit_trail_pdf,
     InspectError,
     ProcessError,
 )
+
+# Import PDF generator if available (optional feature)
+try:
+    from app.processing import generate_audit_trail_pdf
+    PDF_GENERATION_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: PDF generation not available: {e}")
+    PDF_GENERATION_AVAILABLE = False
 
 
 router = APIRouter(prefix="/api/runs", tags=["runs"])
@@ -446,27 +453,30 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         
-        # Generate and upload audit trail PDF
+        # Generate and upload audit trail PDF (if available)
         pdf_path = None
-        try:
-            pdf_bytes = generate_audit_trail_pdf(
-                run_id=str(run_id),
-                audit_entries=audit_entries,
-                run_summary=run_summary_dict,
-                upload_date=str(upload_date) if upload_date else None
-            )
-            
-            pdf_path = f"{run_id}/audit_trail.pdf"
-            upload_bytes(
-                bucket="outputs",
-                path=pdf_path,
-                content_bytes=pdf_bytes,
-                content_type="application/pdf"
-            )
-        except Exception as pdf_error:
-            # Log PDF error but don't fail the entire process
-            print(f"Warning: Failed to generate PDF audit trail: {pdf_error}")
-            pdf_path = None
+        if PDF_GENERATION_AVAILABLE:
+            try:
+                pdf_bytes = generate_audit_trail_pdf(
+                    run_id=str(run_id),
+                    audit_entries=audit_entries,
+                    run_summary=run_summary_dict,
+                    upload_date=str(upload_date) if upload_date else None
+                )
+                
+                pdf_path = f"{run_id}/audit_trail.pdf"
+                upload_bytes(
+                    bucket="outputs",
+                    path=pdf_path,
+                    content_bytes=pdf_bytes,
+                    content_type="application/pdf"
+                )
+            except Exception as pdf_error:
+                # Log PDF error but don't fail the entire process
+                print(f"Warning: Failed to generate PDF audit trail: {pdf_error}")
+                pdf_path = None
+        else:
+            print("Info: PDF generation skipped (reportlab not available)")
         
         # Save run summary and mark as completed
         save_run_summary(
