@@ -43,11 +43,11 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
   if (isLoading) {
     return (
       <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">Processing Complete</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Processing Complete</h2>
         
         <div className="flex flex-col items-center justify-center py-12">
           <svg
-            className="animate-spin h-16 w-16 text-blue-600 mb-6"
+            className="animate-spin h-16 w-16 text-gray-700 mb-6"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -67,8 +67,8 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
             ></path>
           </svg>
           
-          <p className="text-gray-700 font-medium text-lg mb-2">Preparing Download...</p>
-          <p className="text-gray-500 text-sm">Please wait...</p>
+          <p className="text-gray-900 font-medium text-lg mb-2">Preparing Download...</p>
+          <p className="text-gray-600 text-sm">Please wait...</p>
         </div>
       </div>
     )
@@ -77,12 +77,12 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
   if (error) {
     return (
       <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">Download Error</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Download Error</h2>
         
-        <div className="mb-6 p-6 bg-red-50 border border-red-200 rounded-md">
+        <div className="mb-6 p-6 bg-gray-50 border border-gray-300 rounded-md">
           <div className="flex items-start gap-4">
             <svg
-              className="w-8 h-8 text-red-600 flex-shrink-0"
+              className="w-8 h-8 text-gray-700 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -95,13 +95,13 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
               />
             </svg>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-red-800 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Unable to Fetch Download Links
               </h3>
-              <p className="text-sm text-red-700 mb-4">{error}</p>
+              <p className="text-sm text-gray-700 mb-4">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors text-sm font-medium"
               >
                 Retry
               </button>
@@ -126,10 +126,10 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
       </h2>
 
       {/* Success Banner */}
-      <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+      <div className="mb-6 p-4 bg-gray-50 border border-gray-300 rounded-md">
         <div className="flex items-center gap-3">
           <svg
-            className="w-8 h-8 text-green-600"
+            className="w-8 h-8 text-gray-900"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -142,10 +142,10 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
             />
           </svg>
           <div className="flex-1">
-            <h3 className="text-base font-semibold text-green-800">
+            <h3 className="text-base font-semibold text-gray-900">
               Processing Completed Successfully
             </h3>
-            <p className="text-sm text-green-700">
+            <p className="text-sm text-gray-700">
               Your files are ready for download.
             </p>
           </div>
@@ -161,12 +161,12 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
           {downloadData?.excel_file_url && (
             <button
               onClick={() => handleDownload(downloadData.excel_file_url, 'output.xlsx')}
-              className="w-full p-4 bg-white border-2 border-blue-300 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-between group"
+              className="w-full p-4 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <svg
-                    className="w-7 h-7 text-blue-600"
+                    className="w-7 h-7 text-gray-700"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -180,12 +180,12 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Excel Output File</p>
+                  <p className="font-semibold text-gray-900">Excel Output File</p>
                   <p className="text-sm text-gray-600">Processed AP run with reconciliation</p>
                 </div>
               </div>
               <svg
-                className="w-6 h-6 text-blue-600 group-hover:translate-x-1 transition-transform"
+                className="w-6 h-6 text-gray-700 group-hover:translate-x-1 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -204,12 +204,12 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
           {downloadData?.pdf_file_url && (
             <button
               onClick={() => handleDownload(downloadData.pdf_file_url!, 'output.pdf')}
-              className="w-full p-4 bg-white border-2 border-red-300 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-between group"
+              className="w-full p-4 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                   <svg
-                    className="w-7 h-7 text-red-600"
+                    className="w-7 h-7 text-gray-700"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -223,12 +223,12 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">PDF Report</p>
+                  <p className="font-semibold text-gray-900">PDF Report</p>
                   <p className="text-sm text-gray-600">Printable reconciliation report</p>
                 </div>
               </div>
               <svg
-                className="w-6 h-6 text-red-600 group-hover:translate-x-1 transition-transform"
+                className="w-6 h-6 text-gray-700 group-hover:translate-x-1 transition-transform"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -400,25 +400,11 @@ function formatTimestamp(timestamp: string): string {
 function getActionColor(action: string): string {
   const actionLower = action.toLowerCase()
   
-  if (actionLower.includes('upload') || actionLower.includes('start')) {
-    return 'bg-blue-100 text-blue-800'
-  }
-  if (actionLower.includes('mapping') || actionLower.includes('override')) {
-    return 'bg-purple-100 text-purple-800'
-  }
-  if (actionLower.includes('process') || actionLower.includes('split')) {
-    return 'bg-green-100 text-green-800'
-  }
-  if (actionLower.includes('hold') || actionLower.includes('force')) {
-    return 'bg-red-100 text-red-800'
-  }
-  if (actionLower.includes('match')) {
-    return 'bg-yellow-100 text-yellow-800'
-  }
   if (actionLower.includes('complete') || actionLower.includes('finish')) {
-    return 'bg-green-100 text-green-800'
+    return 'bg-gray-900 text-white'
   }
   
+  // All other actions use subtle gray
   return 'bg-gray-100 text-gray-800'
 }
 

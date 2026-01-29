@@ -38,12 +38,12 @@ export default function InspectingStep({ runId, onNext, onError }: InspectingSte
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Inspecting</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Inspecting</h2>
       
       <div className="flex flex-col items-center justify-center py-12">
         {/* Spinner */}
         <svg
-          className="animate-spin h-16 w-16 text-blue-600 mb-6"
+          className="animate-spin h-16 w-16 text-gray-700 mb-6"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -64,8 +64,8 @@ export default function InspectingStep({ runId, onNext, onError }: InspectingSte
         </svg>
         
         {/* Status Text */}
-        <p className="text-gray-700 font-medium text-lg mb-2">{status}</p>
-        <p className="text-gray-500 text-sm">Please wait...</p>
+        <p className="text-gray-900 font-medium text-lg mb-2">{status}</p>
+        <p className="text-gray-600 text-sm">Please wait...</p>
       </div>
     </div>
   )

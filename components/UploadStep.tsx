@@ -50,34 +50,6 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-          <svg
-            className="w-5 h-5 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-        <h2 className="text-lg font-semibold text-gray-800">File Upload</h2>
-      </div>
-
-      {/* Description */}
-      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
-        <p className="text-sm text-gray-700">
-          An agent that automatically sorts your accounting records into "Ready for Payment" or "Payment Hold."
-          Simply upload your files and receive accurately sorted results within a minute.
-        </p>
-      </div>
-
       {/* Input Files Section */}
       <div className="mb-6">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">Input Files</h3>
@@ -133,8 +105,8 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
 
       {/* Validation Warning */}
       {!bothFilesSelected && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-sm text-yellow-800">
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-300 rounded-md">
+          <p className="text-sm text-gray-700">
             Both files are required to proceed
           </p>
         </div>
@@ -146,8 +118,8 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
         disabled={!bothFilesSelected || isLoading}
         className={`w-full py-3 px-6 rounded-md font-medium transition-colors flex items-center justify-center gap-2 ${
           bothFilesSelected && !isLoading
-            ? 'bg-blue-600 text-white hover:bg-blue-700'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ? 'bg-gray-900 text-white hover:bg-gray-800'
+            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
         }`}
       >
         {isLoading ? (
@@ -182,9 +154,9 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
       {/* Ready Status */}
       {bothFilesSelected && (
         <div className="mt-4 flex items-center justify-center gap-2">
-          <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+          <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
             <svg
-              className="w-3 h-3 text-green-600"
+              className="w-3 h-3 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -197,7 +169,7 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
               />
             </svg>
           </div>
-          <span className="text-sm text-green-600 font-medium">
+          <span className="text-sm text-gray-900 font-medium">
             Ready to Process
           </span>
         </div>

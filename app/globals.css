@@ -2,8 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --cream-50: #faf9f7;
+  --cream-100: #f5f3ef;
+  --cream-200: #ebe7df;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
 body {
-  background-color: #f3f4f6;
+  background-color: var(--cream-50);
+  color: var(--gray-900);
 }
 
 

@@ -129,12 +129,12 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">
         Confirm & Continue
       </h2>
 
       {/* Description */}
-      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+      <div className="mb-6 p-4 bg-gray-50 border-l-4 border-gray-900 rounded">
         <p className="text-sm text-gray-700">
           Before we finalize the results, take a moment to review and make sure everything looks right.
         </p>
@@ -143,16 +143,16 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
       {/* Unmatched holds section */}
       {unmatchedHolds.length > 0 ? (
         <div className="mb-6">
-          <div className="p-4 bg-yellow-50 border border-yellow-300 rounded-md mb-4">
+          <div className="p-4 bg-gray-50 border border-gray-300 rounded-md mb-4">
             <div className="flex items-start gap-3">
-              <svg className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-gray-700 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-yellow-800 mb-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">
                   {unmatchedHolds.length} {unmatchedHolds.length === 1 ? 'Name' : 'Names'} on Payment Hold Not Found in Uploaded AP File
                 </h3>
-                <p className="text-sm text-yellow-700">
+                <p className="text-sm text-gray-700">
                   We couldn't automatically match these names from your Payment Hold List. If these should be on hold, please manually match them below.
                 </p>
               </div>
@@ -178,7 +178,7 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
                     <div className="flex items-center gap-3">
                       <span className="text-gray-700 font-medium">{holdName}</span>
                       {existingMapping && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-900 text-white px-2 py-1 rounded">
                           Mapped
                         </span>
                       )}
@@ -238,7 +238,7 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
                       <button
                         onClick={() => addMapping(holdName)}
                         disabled={!selectedField || !selectedValue}
-                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                        className="w-full px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                       >
                         + Add to Payment Hold List
                       </button>
@@ -285,7 +285,7 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
         <button
           onClick={handleRunProcessing}
           disabled={isProcessing}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex-1 px-6 py-3 bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isProcessing ? 'Processing...' : 'Run Processing'}
         </button>

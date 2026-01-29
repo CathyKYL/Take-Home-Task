@@ -82,13 +82,13 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-2">
+    <main className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#faf9f7' }}>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-10 max-w-2xl w-full">
+        <h1 className="text-3xl font-semibold text-gray-900 mb-3">
           AP Sorting Agent
         </h1>
-        <p className="text-gray-600 mb-6">
-          An agent that automatically sorts your accounting records into "Ready for Payment" or "Payment Hold."
+        <p className="text-gray-600 mb-6 leading-relaxed">
+          An agent that automatically sorts your accounting records into "Ready for Payment" or "Payment Hold." Simply upload your files and receive accurately sorted results within a minute.
         </p>
 
         <div className="mb-6">
@@ -99,10 +99,10 @@ export default function Home() {
 
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="mb-6 p-4 bg-gray-50 border border-gray-300 rounded-md">
             <div className="flex items-start gap-3">
               <svg
-                className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
+                className="w-5 h-5 text-gray-700 flex-shrink-0 mt-0.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -115,14 +115,14 @@ export default function Home() {
                 />
               </svg>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-red-800 mb-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">
                   Error
                 </h3>
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-gray-700">{error}</p>
               </div>
               <button
                 onClick={() => setError(null)}
-                className="text-red-600 hover:text-red-800"
+                className="text-gray-600 hover:text-gray-900"
               >
                 <svg
                   className="w-5 h-5"
