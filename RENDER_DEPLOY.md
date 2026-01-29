@@ -41,7 +41,7 @@ In the Render dashboard, add these environment variables under **"Environment"**
 | Variable | Value | Notes |
 |----------|-------|-------|
 | `SUPABASE_URL` | `https://your-project-id.supabase.co` | Get from Supabase Project Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGc...` (long key) | Get from Supabase Project Settings → API → service_role secret key |
+| `SUPABASE_KEY` | `eyJhbGc...` (long key) | Get from Supabase Project Settings → API → service_role secret key |
 
 ### Optional Variables
 
@@ -52,7 +52,7 @@ In the Render dashboard, add these environment variables under **"Environment"**
 ⚠️ **IMPORTANT**: 
 - Use **service_role** key (not anon key) for backend operations
 - Never commit secrets to Git - set them only in Render dashboard
-- The `SUPABASE_SERVICE_ROLE_KEY` is **never exposed** to the browser (server-side only)
+- The `SUPABASE_KEY` is **never exposed** to the browser (server-side only)
 
 ## Step 3: Deploy
 
@@ -112,7 +112,7 @@ Test the full workflow:
 ```bash
 # Test locally first
 docker build -t finance-automation .
-docker run -e SUPABASE_URL=test -e SUPABASE_SERVICE_ROLE_KEY=test -p 10000:10000 finance-automation
+docker run -e SUPABASE_URL=test -e SUPABASE_KEY=test -p 10000:10000 finance-automation
 ```
 
 **Common issues**:
@@ -124,7 +124,7 @@ docker run -e SUPABASE_URL=test -e SUPABASE_SERVICE_ROLE_KEY=test -p 10000:10000
 
 **Check Render logs** for:
 - `ERROR: SUPABASE_URL environment variable is required` → Set env vars in dashboard
-- `ERROR: SUPABASE_SERVICE_ROLE_KEY environment variable is required` → Set env vars in dashboard
+- `ERROR: SUPABASE_KEY environment variable is required` → Set env vars in dashboard
 - `nginx: [emerg]` → Nginx config error
 - `ModuleNotFoundError` → Missing Python dependency in requirements.txt
 
@@ -191,7 +191,7 @@ Your data is in Supabase (separate service):
 
 ## Security Checklist
 
-- ✅ `SUPABASE_SERVICE_ROLE_KEY` never in Git history
+- ✅ `SUPABASE_KEY` never in Git history
 - ✅ Environment variables set only in Render dashboard
 - ✅ HTTPS enforced (Render provides SSL automatically)
 - ✅ Backend secrets never exposed to frontend

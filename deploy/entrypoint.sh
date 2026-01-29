@@ -17,8 +17,8 @@ if [ -z "$SUPABASE_URL" ]; then
     exit 1
 fi
 
-if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-    echo "ERROR: SUPABASE_SERVICE_ROLE_KEY environment variable is required"
+if [ -z "$SUPABASE_KEY" ]; then
+    echo "ERROR: SUPABASE_KEY environment variable is required"
     exit 1
 fi
 

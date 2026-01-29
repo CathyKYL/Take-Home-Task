@@ -83,7 +83,7 @@ EXPOSE 10000
 
 # Environment variables (set these in Render dashboard)
 ENV SUPABASE_URL=""
-ENV SUPABASE_SERVICE_ROLE_KEY=""
+ENV SUPABASE_KEY=""
 ENV PORT=10000
 
 # Health check
