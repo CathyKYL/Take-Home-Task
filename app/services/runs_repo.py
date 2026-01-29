@@ -1,7 +1,7 @@
 # Runs repository
 # Database operations for the runs table
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import date, datetime
 from uuid import UUID
 from supabase import Client
