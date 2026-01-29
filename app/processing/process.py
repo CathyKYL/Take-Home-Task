@@ -118,7 +118,8 @@ def process_run(
     hold_bytes: Optional[bytes],
     mapping: Dict[str, str],
     format_config: Dict[str, Any],
-    upload_date: date
+    upload_date: date,
+    manual_hold_mappings: List[Dict[str, str]] = None
 ) -> Tuple[bytes, Dict[str, Any]]:
     """
     Process AP Excel file: split into Ready_To_Pay and Payment_On_Hold,
@@ -133,6 +134,7 @@ def process_run(
         mapping: Confirmed column mapping (required_field -> actual_column)
         format_config: Format configuration (not used yet, reserved for future)
         upload_date: Date to stamp in Created/Modified date columns (date only)
+        manual_hold_mappings: Manual mappings for unmatched hold names (optional)
         
     Returns:
         Tuple of (output_excel_bytes, run_summary_dict)
@@ -177,6 +179,18 @@ def process_run(
             lambda row: check_on_hold(row, account_column, hold_set),
             axis=1
         )
+        
+        # Step 5.5: Apply manual hold mappings (if any)
+        if manual_hold_mappings:
+            for mapping_rule in manual_hold_mappings:
+                field_name = mapping_rule.get("field")
+                field_value = mapping_rule.get("value")
+                
+                # Check if the field exists in the DataFrame
+                if field_name and field_value and field_name in working_df.columns:
+                    # Mark rows with matching field value as on hold
+                    manual_hold_mask = working_df[field_name].astype(str) == str(field_value)
+                    on_hold_mask = on_hold_mask | manual_hold_mask
         
         # Step 6: Split into ready_df and hold_df
         ready_df = working_df[~on_hold_mask].copy()

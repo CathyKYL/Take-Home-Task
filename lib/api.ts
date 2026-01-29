@@ -13,6 +13,15 @@ export interface Run {
 export interface InspectResponse {
   run_id: string
   status: string
+  detected_columns?: any[]
+  total_rows?: number
+  required_fields?: string[]
+  suggested_mapping?: Record<string, string | null>
+  suggestions?: any[]
+  preview_data?: any[]
+  unmatched_hold_names?: string[]
+  available_ap_values?: Record<string, string[]>
+  // Legacy fields (for backward compatibility with mock data)
   unmatched_payments?: string[]
   available_ap_names?: string[]
   warnings?: string[]
@@ -153,18 +162,16 @@ export async function inspectRun(runId: string): Promise<InspectResponse> {
   }
 }
 
+export interface ManualHoldMapping {
+  hold_name: string
+  field: string
+  value: string
+}
+
 export interface MappingPayload {
-  account_name_column: string
-  created_date_column?: string
-  modified_date_column?: string
-  overrides: {
-    hold_name_to_ap_name: Record<string, string>
-    row_level_holds: Array<{
-      match_field: string
-      match_value: string
-      force_on_hold: boolean
-    }>
-  }
+  mapping: Record<string, string>  // e.g., { account_name: "Account Name" }
+  format_config?: Record<string, any>
+  manual_hold_mappings?: ManualHoldMapping[]
 }
 
 /**

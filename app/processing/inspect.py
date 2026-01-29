@@ -353,3 +353,133 @@ def get_column_info(ap_bytes: bytes) -> List[Dict[str, Any]]:
         raise InspectError(f"Failed to extract column info: {str(e)}")
 
 
+def load_hold_list_names(hold_bytes: bytes) -> List[str]:
+    """
+    Extract account names from hold list Excel file.
+    
+    Args:
+        hold_bytes: Hold list Excel file as bytes
+        
+    Returns:
+        List of normalized hold names
+        
+    Raises:
+        InspectError: If hold list cannot be read
+    """
+    try:
+        hold_file = io.BytesIO(hold_bytes)
+        hold_df = pd.read_excel(hold_file, sheet_name=0)
+        
+        if hold_df.empty:
+            return []
+        
+        # Try to find the account name column (first column or best match)
+        account_column = hold_df.columns[0]
+        for col in hold_df.columns:
+            col_lower = str(col).lower()
+            if 'account' in col_lower or 'name' in col_lower or 'vendor' in col_lower:
+                account_column = col
+                break
+        
+        # Extract unique names, normalize and filter out empty
+        hold_names = hold_df[account_column].dropna().unique().tolist()
+        hold_names = [normalize_name(str(name)) for name in hold_names if name]
+        
+        return hold_names
+        
+    except Exception as e:
+        raise InspectError(f"Failed to load hold list: {str(e)}")
+
+
+def normalize_name(name: str) -> str:
+    """Normalize account name for matching"""
+    if not name:
+        return ""
+    # Remove extra whitespace, convert to lowercase
+    return " ".join(str(name).strip().lower().split())
+
+
+def find_unmatched_holds(
+    ap_account_names: List[str],
+    hold_list_names: List[str],
+    threshold: int = 80
+) -> List[str]:
+    """
+    Find hold list names that aren't found in AP file using fuzzy matching.
+    
+    Args:
+        ap_account_names: List of account names from AP file
+        hold_list_names: List of names from hold list
+        threshold: Minimum fuzzy match score (0-100) to consider a match
+        
+    Returns:
+        List of hold names not found in AP file
+    """
+    if not hold_list_names:
+        return []
+    
+    if not ap_account_names:
+        return hold_list_names
+    
+    # Normalize all AP names
+    normalized_ap_names = [normalize_name(name) for name in ap_account_names]
+    
+    unmatched = []
+    for hold_name in hold_list_names:
+        normalized_hold = normalize_name(hold_name)
+        
+        # Check if any AP name matches this hold name
+        found_match = False
+        for ap_name in normalized_ap_names:
+            score = fuzz.ratio(normalized_hold, ap_name)
+            if score >= threshold:
+                found_match = True
+                break
+        
+        if not found_match:
+            unmatched.append(hold_name)
+    
+    return unmatched
+
+
+def extract_unique_field_values(ap_bytes: bytes, max_values_per_field: int = 100) -> Dict[str, List[str]]:
+    """
+    Extract unique values for each field in AP file (for dropdown options).
+    
+    Args:
+        ap_bytes: AP Excel file as bytes
+        max_values_per_field: Maximum number of unique values to return per field
+        
+    Returns:
+        Dict mapping field name to list of unique values
+    """
+    try:
+        ap_file = io.BytesIO(ap_bytes)
+        xl_file = pd.ExcelFile(ap_file)
+        
+        if not xl_file.sheet_names:
+            return {}
+        
+        df = pd.read_excel(ap_file, sheet_name=xl_file.sheet_names[0])
+        
+        if df.empty:
+            return {}
+        
+        field_values = {}
+        for column in df.columns:
+            # Get unique non-null values
+            unique_vals = df[column].dropna().unique()
+            
+            # Convert to strings and sort
+            str_vals = [str(v) for v in unique_vals if v]
+            str_vals = sorted(str_vals)[:max_values_per_field]
+            
+            field_values[column] = str_vals
+        
+        return field_values
+        
+    except Exception as e:
+        raise InspectError(f"Failed to extract field values: {str(e)}")
+
+
+

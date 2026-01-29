@@ -79,11 +79,22 @@ class InspectResponse(BaseModel):
     
     # Preview data (first 5 rows)
     preview_data: List[Dict[str, Any]]
+    
+    # Unmatched hold names (for manual review in Step 3)
+    unmatched_hold_names: List[str] = []
+    available_ap_values: Dict[str, List[str]] = {}  # field_name -> unique values
 
 
 # ============================================================================
 # POST /runs/{run_id}/mapping - Save confirmed mapping and format config
 # ============================================================================
+
+class ManualHoldMapping(BaseModel):
+    """Manual mapping for unmatched hold name"""
+    hold_name: str
+    field: str  # Column name in AP file (e.g., "Account Name", "Invoice Number")
+    value: str  # Value to match in that field
+
 
 class MappingRequest(BaseModel):
     """User-confirmed column mapping and format configuration"""
@@ -97,6 +108,12 @@ class MappingRequest(BaseModel):
     format_config: Optional[Dict[str, Any]] = Field(
         default={},
         description="Date formats, number formats, etc."
+    )
+    
+    # Manual hold mappings (for unmatched hold names)
+    manual_hold_mappings: List[ManualHoldMapping] = Field(
+        default=[],
+        description="Manual mappings for hold names not auto-matched"
     )
 
 
@@ -170,5 +187,6 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     run_id: Optional[UUID] = None
+
 
 

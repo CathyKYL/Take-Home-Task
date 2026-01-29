@@ -42,6 +42,9 @@ from app.services import (
 from app.processing import (
     inspect_ap_excel,
     get_column_info,
+    load_hold_list_names,
+    find_unmatched_holds,
+    extract_unique_field_values,
     process_run,
     InspectError,
     ProcessError,
@@ -186,6 +189,43 @@ async def inspect_run(run_id: UUID):
         # Get detailed column info
         column_info_list = get_column_info(ap_bytes)
         
+        # Check for unmatched hold names (if hold list was uploaded)
+        unmatched_hold_names = []
+        available_ap_values = {}
+        hold_path = run_record.get("hold_upload_path")
+        
+        if hold_path:
+            try:
+                # Download hold list
+                hold_bytes = download_bytes(bucket="uploads", path=hold_path)
+                
+                # Extract hold list names
+                hold_list_names = load_hold_list_names(hold_bytes)
+                
+                # Get account name column from suggested mapping
+                account_column = inspection_result["suggested_mapping"].get("account_name")
+                
+                if account_column and account_column in inspection_result["columns"]:
+                    # Extract AP account names from preview rows
+                    ap_account_names = []
+                    for row in inspection_result["preview_rows"]:
+                        if account_column in row and row[account_column]:
+                            ap_account_names.append(str(row[account_column]))
+                    
+                    # Find unmatched holds
+                    unmatched_hold_names = find_unmatched_holds(
+                        ap_account_names=ap_account_names,
+                        hold_list_names=hold_list_names
+                    )
+                    
+                    # If there are unmatched holds, extract unique field values for manual mapping
+                    if unmatched_hold_names:
+                        available_ap_values = extract_unique_field_values(ap_bytes)
+                        
+            except Exception as e:
+                # Don't fail the whole inspect if hold checking fails
+                print(f"Warning: Could not check for unmatched holds: {str(e)}")
+        
         # Build detected schema to store
         detected_schema = {
             "sheet_names": inspection_result["sheet_names"],
@@ -237,7 +277,9 @@ async def inspect_run(run_id: UUID):
             required_fields=required_fields,
             suggested_mapping=inspection_result["suggested_mapping"],
             suggestions=mapping_suggestions,
-            preview_data=inspection_result["preview_rows"]
+            preview_data=inspection_result["preview_rows"],
+            unmatched_hold_names=unmatched_hold_names,
+            available_ap_values=available_ap_values
         )
         
     except HTTPException:
@@ -280,11 +322,18 @@ async def confirm_mapping(run_id: UUID, request: MappingRequest):
                 detail="Missing required field in mapping: 'account_name'"
             )
         
+        # Convert manual hold mappings to dict format
+        manual_mappings_list = [
+            {"hold_name": m.hold_name, "field": m.field, "value": m.value}
+            for m in request.manual_hold_mappings
+        ]
+        
         # Save mapping to database
         save_mapping(
             run_id=run_id,
             confirmed_mapping=request.mapping,
-            format_config=request.format_config or {}
+            format_config=request.format_config or {},
+            manual_hold_mappings=manual_mappings_list
         )
         
         update_run(run_id, {"status": "mapped"})
@@ -334,6 +383,7 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
         hold_path = run_record.get("hold_upload_path")
         confirmed_mapping = run_record.get("confirmed_mapping_json")
         format_config = run_record.get("format_config_json") or {}
+        manual_hold_mappings = run_record.get("manual_hold_mappings_json") or []
         upload_date = run_record.get("upload_date")
         
         if not ap_path:
@@ -365,7 +415,8 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             hold_bytes=hold_bytes,
             mapping=confirmed_mapping,
             format_config=format_config,
-            upload_date=upload_date
+            upload_date=upload_date,
+            manual_hold_mappings=manual_hold_mappings
         )
         
         processing_time = time.time() - start_time

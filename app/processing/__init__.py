@@ -6,6 +6,9 @@ from .inspect import (
     get_column_info,
     normalize_column_name,
     suggest_mapping_for_field,
+    load_hold_list_names,
+    find_unmatched_holds,
+    extract_unique_field_values,
     InspectError,
     FIELD_CANDIDATES,
 )
@@ -23,6 +26,9 @@ __all__ = [
     "get_column_info",
     "normalize_column_name",
     "suggest_mapping_for_field",
+    "load_hold_list_names",
+    "find_unmatched_holds",
+    "extract_unique_field_values",
     "InspectError",
     "FIELD_CANDIDATES",
     # Process

@@ -189,7 +189,8 @@ def save_detected_schema(run_id: UUID, schema_json: Dict[str, Any]) -> Dict[str,
 def save_mapping(
     run_id: UUID,
     confirmed_mapping: Dict[str, str],
-    format_config: Dict[str, Any]
+    format_config: Dict[str, Any],
+    manual_hold_mappings: List[Dict[str, str]] = None
 ) -> Dict[str, Any]:
     """
     Save user-confirmed mapping and format config (convenience method).
@@ -198,6 +199,7 @@ def save_mapping(
         run_id: UUID of the run
         confirmed_mapping: User-confirmed column mappings
         format_config: Format configuration (date formats, etc.)
+        manual_hold_mappings: Manual mappings for unmatched hold names
         
     Returns:
         dict: Updated run record
@@ -205,10 +207,15 @@ def save_mapping(
     Raises:
         RunsRepoError: If update fails
     """
-    return update_run(run_id, {
+    update_data = {
         "confirmed_mapping_json": confirmed_mapping,
         "format_config_json": format_config
-    })
+    }
+    
+    if manual_hold_mappings is not None:
+        update_data["manual_hold_mappings_json"] = manual_hold_mappings
+    
+    return update_run(run_id, update_data)
 
 
 def save_run_summary(
@@ -255,5 +262,6 @@ def mark_run_failed(run_id: UUID, error_message: str) -> Dict[str, Any]:
         "status": "failed",
         "error_message": error_message
     })
+
 
 
