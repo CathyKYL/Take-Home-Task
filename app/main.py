@@ -23,12 +23,7 @@ app.add_middleware(
 # Register route blueprints
 app.include_router(runs_router)
 
-@app.get("/")
-async def root():
-    """Health check endpoint"""
-    return {"status": "ok", "service": "finance-automation-backend"}
-
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """Detailed health check"""
     return {

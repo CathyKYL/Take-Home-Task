@@ -1,6 +1,7 @@
 // API Client for backend communication
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+// Uses relative paths for same-origin requests (frontend and backend served from same domain)
+// In development, configure Next.js proxy or run both servers
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
 // Types for API responses
 export interface Run {

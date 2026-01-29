@@ -48,7 +48,7 @@ from app.processing import (
 )
 
 
-router = APIRouter(prefix="/runs", tags=["runs"])
+router = APIRouter(prefix="/api/runs", tags=["runs"])
 
 
 @router.post("", response_model=CreateRunResponse, status_code=201)
@@ -497,5 +497,6 @@ async def get_run_status(run_id: UUID):
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get run: {str(e)}")
+
 
 
