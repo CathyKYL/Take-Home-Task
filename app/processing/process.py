@@ -119,11 +119,12 @@ def process_run(
     mapping: Dict[str, str],
     format_config: Dict[str, Any],
     upload_date: date,
-    manual_hold_mappings: List[Dict[str, str]] = None
+    manual_hold_mappings: List[Dict[str, str]] = None,
+    date_stamping_config: Optional[Dict[str, Any]] = None
 ) -> Tuple[bytes, Dict[str, Any], List[Dict[str, Any]]]:
     """
     Process AP Excel file: split into Ready_To_Pay and Payment_On_Hold,
-    stamp dates, and generate output Excel.
+    optionally stamp dates based on user configuration, and generate output Excel.
     
     CRITICAL: Only modifies Created Date and Last Modified Date columns.
     All other data remains unchanged.
@@ -250,7 +251,7 @@ def process_run(
             "rows_affected": len(raw_df)
         })
         
-        # Step 7: Handle Created Date and Last Modified Date columns
+        # Step 7: Handle Created Date and Last Modified Date columns (OPTIONAL - based on user config)
         # Determine column names to use
         created_col = mapping.get("created_date", "Created Date")
         modified_col = mapping.get("modified_date", "Last Modified Date")
@@ -261,23 +262,80 @@ def process_run(
         if modified_col not in ready_df.columns:
             modified_col = "Last Modified Date"
         
-        # Set date values (date only, no time) for Ready_To_Pay
-        ready_df[created_col] = upload_date
-        ready_df[modified_col] = upload_date
-        
-        # Set date values (date only, no time) for Payment_On_Hold
-        hold_df[created_col] = upload_date
-        hold_df[modified_col] = upload_date
-        
-        # Audit: Date stamping
-        total_stamped = len(ready_df) + len(hold_df)
-        audit_entries.append({
-            "timestamp": datetime.now().isoformat(),
-            "action": "Date Stamping",
-            "action_type": "date_stamp",
-            "details": f"Stamped '{created_col}' and '{modified_col}' with {upload_date} on {total_stamped} transactions",
-            "rows_affected": total_stamped
-        })
+        # Apply date stamping ONLY if user requested it
+        if date_stamping_config and date_stamping_config.get("enabled"):
+            apply_to_tabs = date_stamping_config.get("apply_to_tabs", [])
+            columns_to_update = date_stamping_config.get("columns_to_update", [])
+            stamp_date_str = date_stamping_config.get("stamp_date")
+            
+            # Parse the stamp date
+            if stamp_date_str:
+                try:
+                    stamp_date = datetime.strptime(stamp_date_str, "%Y-%m-%d").date()
+                except:
+                    stamp_date = upload_date  # Fallback to upload date
+            else:
+                stamp_date = upload_date
+            
+            rows_stamped = 0
+            tabs_affected = []
+            columns_affected = []
+            
+            # Apply to Ready_To_Pay tab if requested
+            if "ready_to_pay" in apply_to_tabs:
+                if "created_date" in columns_to_update:
+                    ready_df[created_col] = stamp_date
+                    columns_affected.append(created_col)
+                if "modified_date" in columns_to_update:
+                    ready_df[modified_col] = stamp_date
+                    if modified_col not in columns_affected:
+                        columns_affected.append(modified_col)
+                rows_stamped += len(ready_df)
+                tabs_affected.append("Ready_To_Pay")
+            
+            # Apply to Payment_On_Hold tab if requested
+            if "payment_on_hold" in apply_to_tabs:
+                if "created_date" in columns_to_update:
+                    hold_df[created_col] = stamp_date
+                    if created_col not in columns_affected:
+                        columns_affected.append(created_col)
+                if "modified_date" in columns_to_update:
+                    hold_df[modified_col] = stamp_date
+                    if modified_col not in columns_affected:
+                        columns_affected.append(modified_col)
+                rows_stamped += len(hold_df)
+                if "Payment_On_Hold" not in tabs_affected:
+                    tabs_affected.append("Payment_On_Hold")
+            
+            # Audit: Date stamping (if applied)
+            if rows_stamped > 0:
+                audit_entries.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "action": "Date Stamping",
+                    "action_type": "date_stamp",
+                    "details": f"User requested: Stamped {', '.join(columns_affected)} with {stamp_date} on {', '.join(tabs_affected)} tabs ({rows_stamped} transactions)",
+                    "rows_affected": rows_stamped
+                })
+        else:
+            # No date stamping requested - ensure columns exist but leave empty or preserve original
+            # Create columns if they don't exist (empty)
+            if created_col not in ready_df.columns:
+                ready_df[created_col] = None
+            if modified_col not in ready_df.columns:
+                ready_df[modified_col] = None
+            if created_col not in hold_df.columns:
+                hold_df[created_col] = None
+            if modified_col not in hold_df.columns:
+                hold_df[modified_col] = None
+            
+            # Audit: No date stamping
+            audit_entries.append({
+                "timestamp": datetime.now().isoformat(),
+                "action": "Date Stamping Skipped",
+                "action_type": "date_stamp_skip",
+                "details": "User chose not to update date columns",
+                "rows_affected": 0
+            })
         
         # Step 8: Prepare Hold_List tab (use ORIGINAL values, not normalized)
         if original_hold_values:

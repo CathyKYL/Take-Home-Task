@@ -168,10 +168,18 @@ export interface ManualHoldMapping {
   value: string
 }
 
+export interface DateStampingConfig {
+  enabled: boolean
+  apply_to_tabs: string[]  // 'ready_to_pay' | 'payment_on_hold'
+  columns_to_update: string[]  // 'created_date' | 'modified_date'
+  stamp_date: string | null  // YYYY-MM-DD format
+}
+
 export interface MappingPayload {
   mapping: Record<string, string>  // e.g., { account_name: "Account Name" }
   format_config?: Record<string, any>
   manual_hold_mappings?: ManualHoldMapping[]
+  date_stamping?: DateStampingConfig
 }
 
 /**

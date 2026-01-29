@@ -22,6 +22,16 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
   const [selectedFields, setSelectedFields] = useState<Record<string, string>>({})
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  
+  // Date stamping configuration
+  const [dateStampingEnabled, setDateStampingEnabled] = useState(false)
+  const [applyToTabs, setApplyToTabs] = useState<string[]>([])
+  const [columnsToUpdate, setColumnsToUpdate] = useState<string[]>([])
+  const [stampDate, setStampDate] = useState<string>(() => {
+    // Default to today's date
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
 
   const unmatchedHolds = inspectData.unmatched_hold_names || []
   const availableFields = Object.keys(inspectData.available_ap_values || {})
@@ -78,15 +88,45 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
   const removeMapping = (holdName: string) => {
     setManualHoldMappings(prev => prev.filter(m => m.hold_name !== holdName))
   }
+  
+  const toggleTab = (tab: string) => {
+    setApplyToTabs(prev => 
+      prev.includes(tab) 
+        ? prev.filter(t => t !== tab)
+        : [...prev, tab]
+    )
+  }
+  
+  const toggleColumn = (column: string) => {
+    setColumnsToUpdate(prev => 
+      prev.includes(column) 
+        ? prev.filter(c => c !== column)
+        : [...prev, column]
+    )
+  }
 
   const handleRunProcessing = async () => {
     setIsProcessing(true)
     
     try {
-      // Save mapping with manual hold mappings
+      // Prepare date stamping config
+      const dateStampingConfig = dateStampingEnabled ? {
+        enabled: true,
+        apply_to_tabs: applyToTabs,
+        columns_to_update: columnsToUpdate,
+        stamp_date: stampDate
+      } : {
+        enabled: false,
+        apply_to_tabs: [],
+        columns_to_update: [],
+        stamp_date: null
+      }
+      
+      // Save mapping with manual hold mappings and date stamping config
       await saveMapping(runId, {
         mapping: { account_name: detectedAccountColumn },
-        manual_hold_mappings: manualHoldMappings
+        manual_hold_mappings: manualHoldMappings,
+        date_stamping: dateStampingConfig
       })
 
       // Run processing
@@ -105,10 +145,24 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
     setIsProcessing(true)
     
     try {
+      // Prepare date stamping config (same as Run Processing)
+      const dateStampingConfig = dateStampingEnabled ? {
+        enabled: true,
+        apply_to_tabs: applyToTabs,
+        columns_to_update: columnsToUpdate,
+        stamp_date: stampDate
+      } : {
+        enabled: false,
+        apply_to_tabs: [],
+        columns_to_update: [],
+        stamp_date: null
+      }
+      
       // Save mapping without manual mappings
       await saveMapping(runId, {
         mapping: { account_name: detectedAccountColumn },
-        manual_hold_mappings: []
+        manual_hold_mappings: [],
+        date_stamping: dateStampingConfig
       })
 
       // Run processing
@@ -272,6 +326,122 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
           </p>
         </div>
       )}
+
+      {/* Date Stamping Configuration */}
+      <div className="mb-6 p-5 bg-gray-50 border border-gray-300 rounded-lg">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-gray-900">Date Stamping (Optional)</h3>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="sr-only peer"
+              checked={dateStampingEnabled}
+              onChange={(e) => setDateStampingEnabled(e.target.checked)}
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+          </label>
+        </div>
+
+        {dateStampingEnabled && (
+          <div className="space-y-4">
+            {/* Date Picker */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date to Apply
+              </label>
+              <input
+                type="date"
+                value={stampDate}
+                onChange={(e) => setStampDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
+
+            {/* Apply to Tabs */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Apply to Output Tabs
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applyToTabs.includes('ready_to_pay')}
+                    onChange={() => toggleTab('ready_to_pay')}
+                    className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                  />
+                  <span className="text-sm text-gray-700">Ready for Payment</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applyToTabs.includes('payment_on_hold')}
+                    onChange={() => toggleTab('payment_on_hold')}
+                    className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                  />
+                  <span className="text-sm text-gray-700">Payment On Hold</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Columns to Update */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Date Columns to Update
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={columnsToUpdate.includes('created_date')}
+                    onChange={() => toggleColumn('created_date')}
+                    className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                  />
+                  <span className="text-sm text-gray-700">Created Date</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={columnsToUpdate.includes('modified_date')}
+                    onChange={() => toggleColumn('modified_date')}
+                    className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
+                  />
+                  <span className="text-sm text-gray-700">Last Modified Date</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Summary */}
+            {(applyToTabs.length > 0 || columnsToUpdate.length > 0) && (
+              <div className="mt-3 p-3 bg-white border border-gray-300 rounded text-sm">
+                <p className="text-gray-700">
+                  <strong>Summary:</strong> Will update{' '}
+                  {columnsToUpdate.length > 0 ? (
+                    <>
+                      <strong>
+                        {columnsToUpdate.map(c => c === 'created_date' ? 'Created Date' : 'Last Modified Date').join(' and ')}
+                      </strong>
+                    </>
+                  ) : (
+                    <em>no columns</em>
+                  )}
+                  {' '}in{' '}
+                  {applyToTabs.length > 0 ? (
+                    <>
+                      <strong>
+                        {applyToTabs.map(t => t === 'ready_to_pay' ? 'Ready for Payment' : 'Payment On Hold').join(' and ')}
+                      </strong>
+                    </>
+                  ) : (
+                    <em>no tabs</em>
+                  )}
+                  {' '}to <strong>{stampDate}</strong>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Action buttons */}
       <div className="flex gap-3">

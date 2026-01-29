@@ -347,12 +347,23 @@ async def confirm_mapping(run_id: UUID, request: MappingRequest):
             for m in request.manual_hold_mappings
         ]
         
+        # Convert date stamping config to dict format
+        date_stamping_dict = None
+        if request.date_stamping:
+            date_stamping_dict = {
+                "enabled": request.date_stamping.enabled,
+                "apply_to_tabs": request.date_stamping.apply_to_tabs,
+                "columns_to_update": request.date_stamping.columns_to_update,
+                "stamp_date": request.date_stamping.stamp_date
+            }
+        
         # Save mapping to database
         save_mapping(
             run_id=run_id,
             confirmed_mapping=request.mapping,
             format_config=request.format_config or {},
-            manual_hold_mappings=manual_mappings_list
+            manual_hold_mappings=manual_mappings_list,
+            date_stamping_config=date_stamping_dict
         )
         
         update_run(run_id, {"status": "mapped"})
@@ -403,6 +414,7 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
         confirmed_mapping = run_record.get("confirmed_mapping_json")
         format_config = run_record.get("format_config_json") or {}
         manual_hold_mappings = run_record.get("manual_hold_mappings_json") or []
+        date_stamping_config = run_record.get("date_stamping_config_json")
         upload_date = run_record.get("upload_date")
         
         if not ap_path:
@@ -435,7 +447,8 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             mapping=confirmed_mapping,
             format_config=format_config,
             upload_date=upload_date,
-            manual_hold_mappings=manual_hold_mappings
+            manual_hold_mappings=manual_hold_mappings,
+            date_stamping_config=date_stamping_config
         )
         
         processing_time = time.time() - start_time

@@ -96,6 +96,26 @@ class ManualHoldMapping(BaseModel):
     value: str  # Value to match in that field
 
 
+class DateStampingConfig(BaseModel):
+    """Configuration for manual date stamping"""
+    enabled: bool = Field(
+        default=False,
+        description="Whether to apply date stamping"
+    )
+    apply_to_tabs: List[str] = Field(
+        default=[],
+        description="Which tabs to apply date stamping: 'ready_to_pay', 'payment_on_hold', or both"
+    )
+    columns_to_update: List[str] = Field(
+        default=[],
+        description="Which date columns to update: 'created_date', 'modified_date', or both"
+    )
+    stamp_date: Optional[str] = Field(
+        default=None,
+        description="Date to stamp in YYYY-MM-DD format"
+    )
+
+
 class MappingRequest(BaseModel):
     """User-confirmed column mapping and format configuration"""
     # Column mapping: required_field -> actual_column_name
@@ -114,6 +134,12 @@ class MappingRequest(BaseModel):
     manual_hold_mappings: List[ManualHoldMapping] = Field(
         default=[],
         description="Manual mappings for hold names not auto-matched"
+    )
+    
+    # Date stamping configuration (manual)
+    date_stamping: Optional[DateStampingConfig] = Field(
+        default=None,
+        description="Manual date stamping preferences"
     )
 
 

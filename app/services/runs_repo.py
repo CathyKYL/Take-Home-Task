@@ -126,7 +126,8 @@ def update_run(run_id: UUID, updates: Dict[str, Any]) -> Dict[str, Any]:
             'format_config_json', 
             'run_summary_json',
             'manual_hold_mappings_json',
-            'audit_trail_json'
+            'audit_trail_json',
+            'date_stamping_config_json'
         ]
         
         for key in json_fields:
@@ -227,7 +228,8 @@ def save_mapping(
     run_id: UUID,
     confirmed_mapping: Dict[str, str],
     format_config: Dict[str, Any],
-    manual_hold_mappings: List[Dict[str, str]] = None
+    manual_hold_mappings: List[Dict[str, str]] = None,
+    date_stamping_config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Save user-confirmed mapping and format config (convenience method).
@@ -237,6 +239,7 @@ def save_mapping(
         confirmed_mapping: User-confirmed column mappings
         format_config: Format configuration (date formats, etc.)
         manual_hold_mappings: Manual mappings for unmatched hold names
+        date_stamping_config: Date stamping configuration (which tabs, columns, date)
         
     Returns:
         dict: Updated run record
@@ -251,6 +254,9 @@ def save_mapping(
     
     if manual_hold_mappings is not None:
         update_data["manual_hold_mappings_json"] = manual_hold_mappings
+    
+    if date_stamping_config is not None:
+        update_data["date_stamping_config_json"] = date_stamping_config
     
     return update_run(run_id, update_data)
 
