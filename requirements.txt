@@ -6,7 +6,7 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # Supabase integration
-supabase==2.3.4
+supabase>=2.22.0
 
 # Excel/spreadsheet processing
 openpyxl==3.1.2

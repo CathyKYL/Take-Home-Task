@@ -3,6 +3,10 @@
 
 import os
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
 
 class Settings:
     """
@@ -29,4 +33,5 @@ class Settings:
 
 # Global settings instance
 settings = Settings()
+
 

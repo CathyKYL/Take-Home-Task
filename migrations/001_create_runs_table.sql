@@ -37,3 +37,4 @@ CREATE INDEX IF NOT EXISTS idx_runs_upload_date ON runs(upload_date DESC);
 -- Comment on table
 COMMENT ON TABLE runs IS 'Tracks each AP processing run with metadata, file paths, and audit information';
 
+

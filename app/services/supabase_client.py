@@ -21,8 +21,8 @@ def get_supabase_client() -> Client:
     """
     try:
         client: Client = create_client(
-            supabase_url=settings.SUPABASE_URL,
-            supabase_key=settings.SUPABASE_KEY
+            settings.SUPABASE_URL,
+            settings.SUPABASE_KEY
         )
         return client
     except Exception as e:
@@ -47,4 +47,5 @@ def get_client() -> Client:
         _supabase_client = get_supabase_client()
     
     return _supabase_client
+
 

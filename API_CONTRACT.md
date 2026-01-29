@@ -307,3 +307,4 @@ All endpoints may return error responses:
 4. **Auditability**: Every run produces a summary with row counts and reconciliation check
 5. **Reconciliation**: `ready_to_pay_rows + payment_on_hold_rows` must equal `total_raw_rows`
 
+

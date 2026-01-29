@@ -352,3 +352,4 @@ def get_column_info(ap_bytes: bytes) -> List[Dict[str, Any]]:
     except Exception as e:
         raise InspectError(f"Failed to extract column info: {str(e)}")
 
+

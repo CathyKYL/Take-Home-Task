@@ -37,3 +37,4 @@ supabase db push
 | `run_summary_json` | JSONB | Processing summary and audit info |
 | `error_message` | TEXT | Error details if failed |
 
+

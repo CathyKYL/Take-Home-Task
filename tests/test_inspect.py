@@ -60,3 +60,4 @@ class TestInspect:
         assert first_row["Invoice Number"] == "INV-001"
         assert first_row["Amount"] == 1500.0
 
+
