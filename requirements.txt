@@ -1,0 +1,24 @@
+# Core dependencies for finance/accounting automation backend
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Supabase integration
+supabase==2.3.4
+
+# Excel/spreadsheet processing
+openpyxl==3.1.2
+pandas==2.2.0
+
+# Fuzzy matching for account name normalization
+rapidfuzz==3.6.1
+
+# Date handling
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+
