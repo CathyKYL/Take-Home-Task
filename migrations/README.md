@@ -20,6 +20,7 @@ supabase db push
 - `001_create_runs_table.sql` - Creates the main runs table for tracking AP processing operations
 - `002_add_manual_hold_mappings.sql` - Adds column for manual vendor name mappings
 - `003_add_audit_trail.sql` - Adds column for complete audit trail storage
+- `004_add_audit_pdf_path.sql` - Adds column for PDF audit trail report path
 
 ## Runs Table Schema
 
@@ -39,6 +40,7 @@ supabase db push
 | `run_summary_json` | JSONB | Processing summary and audit info |
 | `manual_hold_mappings_json` | JSONB | Manual vendor name mappings |
 | `audit_trail_json` | JSONB | Complete audit trail of all processing actions |
+| `audit_pdf_path` | TEXT | Path to PDF audit trail report in outputs bucket |
 | `error_message` | TEXT | Error details if failed |
 
 

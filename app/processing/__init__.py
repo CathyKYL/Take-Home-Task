@@ -19,6 +19,9 @@ from .process import (
     validate_mapping,
     ProcessError,
 )
+from .audit_pdf import (
+    generate_audit_trail_pdf,
+)
 
 __all__ = [
     # Inspect
@@ -37,5 +40,7 @@ __all__ = [
     "normalize_for_matching",
     "validate_mapping",
     "ProcessError",
+    # Audit PDF
+    "generate_audit_trail_pdf",
 ]
 

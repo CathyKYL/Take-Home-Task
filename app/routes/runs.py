@@ -46,6 +46,7 @@ from app.processing import (
     find_unmatched_holds,
     extract_unique_field_values,
     process_run,
+    generate_audit_trail_pdf,
     InspectError,
     ProcessError,
 )
@@ -445,6 +446,28 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
         
+        # Generate and upload audit trail PDF
+        pdf_path = None
+        try:
+            pdf_bytes = generate_audit_trail_pdf(
+                run_id=str(run_id),
+                audit_entries=audit_entries,
+                run_summary=run_summary_dict,
+                upload_date=str(upload_date) if upload_date else None
+            )
+            
+            pdf_path = f"{run_id}/audit_trail.pdf"
+            upload_bytes(
+                bucket="outputs",
+                path=pdf_path,
+                content_bytes=pdf_bytes,
+                content_type="application/pdf"
+            )
+        except Exception as pdf_error:
+            # Log PDF error but don't fail the entire process
+            print(f"Warning: Failed to generate PDF audit trail: {pdf_error}")
+            pdf_path = None
+        
         # Save run summary and mark as completed
         save_run_summary(
             run_id=run_id,
@@ -452,9 +475,13 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             output_path=output_path
         )
         
-        # Save audit trail
+        # Save audit trail (and PDF path if generated)
         from app.services import save_audit_trail
         save_audit_trail(run_id=run_id, audit_entries=audit_entries)
+        
+        # Save PDF path to run record if generated
+        if pdf_path:
+            update_run(run_id, {"audit_pdf_path": pdf_path})
         
         return ProcessResponse(
             run_id=run_id,
@@ -537,12 +564,26 @@ async def download_output(run_id: UUID):
         # Get audit trail from database
         audit_trail = run_record.get("audit_trail_json") or []
         
+        # Get audit PDF URL if available
+        pdf_file_url = None
+        audit_pdf_path = run_record.get("audit_pdf_path")
+        if audit_pdf_path:
+            try:
+                pdf_file_url = create_signed_url(
+                    bucket="outputs",
+                    path=audit_pdf_path,
+                    expires_in=expires_in
+                )
+            except Exception as e:
+                # Log error but don't fail the entire request
+                print(f"Warning: Failed to create signed URL for PDF: {e}")
+        
         return DownloadResponse(
             run_id=run_id,
             status=run_record["status"],
             excel_file_url=signed_url,  # Frontend expects this field name
-            pdf_file_url=None,  # Not implemented yet
-            audit_trail_url=None,  # Not implemented yet (could generate PDF later)
+            pdf_file_url=pdf_file_url,  # ✅ Now returns PDF audit trail URL if available
+            audit_trail_url=None,  # Reserved for future JSON audit trail download
             summary=summary,
             audit_trail=audit_trail,  # ✅ Now includes real audit trail from database
             download_url=signed_url,  # Keep for backward compatibility
