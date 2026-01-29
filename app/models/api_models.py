@@ -96,23 +96,27 @@ class ManualHoldMapping(BaseModel):
     value: str  # Value to match in that field
 
 
-class DateStampingConfig(BaseModel):
-    """Configuration for manual date stamping"""
+class AccountingPeriodAdjustment(BaseModel):
+    """Configuration for accounting period adjustment - conditional date modification"""
     enabled: bool = Field(
         default=False,
-        description="Whether to apply date stamping"
+        description="Whether to apply accounting period adjustment"
+    )
+    cutoff_date: Optional[str] = Field(
+        default=None,
+        description="Cutoff date in YYYY-MM-DD format - dates before this will be modified"
+    )
+    new_date: Optional[str] = Field(
+        default=None,
+        description="New date in YYYY-MM-DD format - what to change old dates to"
     )
     apply_to_tabs: List[str] = Field(
         default=[],
-        description="Which tabs to apply date stamping: 'ready_to_pay', 'payment_on_hold', or both"
+        description="Which tabs to apply adjustment: 'ready_to_pay', 'payment_on_hold', or both"
     )
-    columns_to_update: List[str] = Field(
+    columns_to_check: List[str] = Field(
         default=[],
-        description="Which date columns to update: 'created_date', 'modified_date', or both"
-    )
-    stamp_date: Optional[str] = Field(
-        default=None,
-        description="Date to stamp in YYYY-MM-DD format"
+        description="Which date columns to check: 'created_date', 'modified_date', or both"
     )
 
 
@@ -136,10 +140,10 @@ class MappingRequest(BaseModel):
         description="Manual mappings for hold names not auto-matched"
     )
     
-    # Date stamping configuration (manual)
-    date_stamping: Optional[DateStampingConfig] = Field(
+    # Accounting period adjustment configuration
+    accounting_period_adjustment: Optional[AccountingPeriodAdjustment] = Field(
         default=None,
-        description="Manual date stamping preferences"
+        description="Accounting period adjustment preferences (conditional date modification)"
     )
 
 

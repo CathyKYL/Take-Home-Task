@@ -120,11 +120,11 @@ def process_run(
     format_config: Dict[str, Any],
     upload_date: date,
     manual_hold_mappings: List[Dict[str, str]] = None,
-    date_stamping_config: Optional[Dict[str, Any]] = None
+    date_stamping_config: Optional[Dict[str, Any]] = None  # Legacy parameter name for compatibility
 ) -> Tuple[bytes, Dict[str, Any], List[Dict[str, Any]]]:
     """
     Process AP Excel file: split into Ready_To_Pay and Payment_On_Hold,
-    optionally stamp dates based on user configuration, and generate output Excel.
+    optionally adjust accounting period dates based on user configuration, and generate output Excel.
     
     CRITICAL: Only modifies Created Date and Last Modified Date columns.
     All other data remains unchanged.
@@ -251,7 +251,7 @@ def process_run(
             "rows_affected": len(raw_df)
         })
         
-        # Step 7: Handle Created Date and Last Modified Date columns (OPTIONAL - based on user config)
+        # Step 7: Handle Accounting Period Adjustment (OPTIONAL - conditional date modification)
         # Determine column names to use
         created_col = mapping.get("created_date", "Created Date")
         modified_col = mapping.get("modified_date", "Last Modified Date")
@@ -262,62 +262,132 @@ def process_run(
         if modified_col not in ready_df.columns:
             modified_col = "Last Modified Date"
         
-        # Apply date stamping ONLY if user requested it
-        if date_stamping_config and date_stamping_config.get("enabled"):
-            apply_to_tabs = date_stamping_config.get("apply_to_tabs", [])
-            columns_to_update = date_stamping_config.get("columns_to_update", [])
-            stamp_date_str = date_stamping_config.get("stamp_date")
+        # Apply accounting period adjustment ONLY if user requested it
+        adjustment_config = date_stamping_config  # Legacy parameter name
+        if adjustment_config and adjustment_config.get("enabled"):
+            apply_to_tabs = adjustment_config.get("apply_to_tabs", [])
+            columns_to_check = adjustment_config.get("columns_to_check", [])
+            cutoff_date_str = adjustment_config.get("cutoff_date")
+            new_date_str = adjustment_config.get("new_date")
             
-            # Parse the stamp date
-            if stamp_date_str:
-                try:
-                    stamp_date = datetime.strptime(stamp_date_str, "%Y-%m-%d").date()
-                except:
-                    stamp_date = upload_date  # Fallback to upload date
-            else:
-                stamp_date = upload_date
+            # Parse dates
+            try:
+                cutoff_date = datetime.strptime(cutoff_date_str, "%Y-%m-%d").date() if cutoff_date_str else upload_date
+            except:
+                cutoff_date = upload_date
             
-            rows_stamped = 0
+            try:
+                new_date = datetime.strptime(new_date_str, "%Y-%m-%d").date() if new_date_str else upload_date
+            except:
+                new_date = upload_date
+            
+            total_changed = 0
+            total_preserved = 0
             tabs_affected = []
             columns_affected = []
             
             # Apply to Ready_To_Pay tab if requested
             if "ready_to_pay" in apply_to_tabs:
-                if "created_date" in columns_to_update:
-                    ready_df[created_col] = stamp_date
-                    columns_affected.append(created_col)
-                if "modified_date" in columns_to_update:
-                    ready_df[modified_col] = stamp_date
+                if "created_date" in columns_to_check:
+                    # Ensure column exists
+                    if created_col not in ready_df.columns:
+                        ready_df[created_col] = None
+                    
+                    # Convert to datetime for comparison (handle NaT/None)
+                    ready_df[created_col] = pd.to_datetime(ready_df[created_col], errors='coerce')
+                    
+                    # Only change dates BEFORE cutoff
+                    mask = ready_df[created_col].notna() & (ready_df[created_col].dt.date < cutoff_date)
+                    changed_count = mask.sum()
+                    preserved_count = (~mask & ready_df[created_col].notna()).sum()
+                    
+                    ready_df.loc[mask, created_col] = pd.Timestamp(new_date)
+                    
+                    total_changed += changed_count
+                    total_preserved += preserved_count
+                    if created_col not in columns_affected:
+                        columns_affected.append(created_col)
+                
+                if "modified_date" in columns_to_check:
+                    # Ensure column exists
+                    if modified_col not in ready_df.columns:
+                        ready_df[modified_col] = None
+                    
+                    # Convert to datetime for comparison
+                    ready_df[modified_col] = pd.to_datetime(ready_df[modified_col], errors='coerce')
+                    
+                    # Only change dates BEFORE cutoff
+                    mask = ready_df[modified_col].notna() & (ready_df[modified_col].dt.date < cutoff_date)
+                    changed_count = mask.sum()
+                    preserved_count = (~mask & ready_df[modified_col].notna()).sum()
+                    
+                    ready_df.loc[mask, modified_col] = pd.Timestamp(new_date)
+                    
+                    total_changed += changed_count
+                    total_preserved += preserved_count
                     if modified_col not in columns_affected:
                         columns_affected.append(modified_col)
-                rows_stamped += len(ready_df)
-                tabs_affected.append("Ready_To_Pay")
+                
+                if "created_date" in columns_to_check or "modified_date" in columns_to_check:
+                    tabs_affected.append("Ready_To_Pay")
             
             # Apply to Payment_On_Hold tab if requested
             if "payment_on_hold" in apply_to_tabs:
-                if "created_date" in columns_to_update:
-                    hold_df[created_col] = stamp_date
+                if "created_date" in columns_to_check:
+                    # Ensure column exists
+                    if created_col not in hold_df.columns:
+                        hold_df[created_col] = None
+                    
+                    # Convert to datetime for comparison
+                    hold_df[created_col] = pd.to_datetime(hold_df[created_col], errors='coerce')
+                    
+                    # Only change dates BEFORE cutoff
+                    mask = hold_df[created_col].notna() & (hold_df[created_col].dt.date < cutoff_date)
+                    changed_count = mask.sum()
+                    preserved_count = (~mask & hold_df[created_col].notna()).sum()
+                    
+                    hold_df.loc[mask, created_col] = pd.Timestamp(new_date)
+                    
+                    total_changed += changed_count
+                    total_preserved += preserved_count
                     if created_col not in columns_affected:
                         columns_affected.append(created_col)
-                if "modified_date" in columns_to_update:
-                    hold_df[modified_col] = stamp_date
+                
+                if "modified_date" in columns_to_check:
+                    # Ensure column exists
+                    if modified_col not in hold_df.columns:
+                        hold_df[modified_col] = None
+                    
+                    # Convert to datetime for comparison
+                    hold_df[modified_col] = pd.to_datetime(hold_df[modified_col], errors='coerce')
+                    
+                    # Only change dates BEFORE cutoff
+                    mask = hold_df[modified_col].notna() & (hold_df[modified_col].dt.date < cutoff_date)
+                    changed_count = mask.sum()
+                    preserved_count = (~mask & hold_df[modified_col].notna()).sum()
+                    
+                    hold_df.loc[mask, modified_col] = pd.Timestamp(new_date)
+                    
+                    total_changed += changed_count
+                    total_preserved += preserved_count
                     if modified_col not in columns_affected:
                         columns_affected.append(modified_col)
-                rows_stamped += len(hold_df)
-                if "Payment_On_Hold" not in tabs_affected:
-                    tabs_affected.append("Payment_On_Hold")
+                
+                if "created_date" in columns_to_check or "modified_date" in columns_to_check:
+                    if "Payment_On_Hold" not in tabs_affected:
+                        tabs_affected.append("Payment_On_Hold")
             
-            # Audit: Date stamping (if applied)
-            if rows_stamped > 0:
+            # Audit: Accounting period adjustment (if applied)
+            if total_changed > 0 or total_preserved > 0:
                 audit_entries.append({
                     "timestamp": datetime.now().isoformat(),
-                    "action": "Date Stamping",
-                    "action_type": "date_stamp",
-                    "details": f"User requested: Stamped {', '.join(columns_affected)} with {stamp_date} on {', '.join(tabs_affected)} tabs ({rows_stamped} transactions)",
-                    "rows_affected": rows_stamped
+                    "action": "Accounting Period Adjustment",
+                    "action_type": "accounting_period_adjustment",
+                    "details": f"Adjusted dates before {cutoff_date} to {new_date} in {', '.join(tabs_affected)} ({', '.join(columns_affected)}). Changed: {total_changed}, Preserved: {total_preserved}",
+                    "rows_affected": total_changed
                 })
         else:
-            # No date stamping requested - ensure columns exist but leave empty or preserve original
+            # No adjustment requested - ensure columns exist but leave as-is or preserve original
             # Create columns if they don't exist (empty)
             if created_col not in ready_df.columns:
                 ready_df[created_col] = None
@@ -328,12 +398,12 @@ def process_run(
             if modified_col not in hold_df.columns:
                 hold_df[modified_col] = None
             
-            # Audit: No date stamping
+            # Audit: No adjustment
             audit_entries.append({
                 "timestamp": datetime.now().isoformat(),
-                "action": "Date Stamping Skipped",
-                "action_type": "date_stamp_skip",
-                "details": "User chose not to update date columns",
+                "action": "Accounting Period Adjustment Skipped",
+                "action_type": "accounting_adjustment_skip",
+                "details": "User chose not to apply accounting period adjustment",
                 "rows_affected": 0
             })
         

@@ -23,15 +23,20 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({})
   const [isProcessing, setIsProcessing] = useState(false)
   
-  // Date stamping configuration
-  const [dateStampingEnabled, setDateStampingEnabled] = useState(false)
-  const [applyToTabs, setApplyToTabs] = useState<string[]>([])
-  const [columnsToUpdate, setColumnsToUpdate] = useState<string[]>([])
-  const [stampDate, setStampDate] = useState<string>(() => {
+  // Accounting period adjustment configuration
+  const [adjustmentEnabled, setAdjustmentEnabled] = useState(false)
+  const [cutoffDate, setCutoffDate] = useState<string>(() => {
     // Default to today's date
     const today = new Date()
     return today.toISOString().split('T')[0]
   })
+  const [newDate, setNewDate] = useState<string>(() => {
+    // Default to today's date
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
+  const [applyToTabs, setApplyToTabs] = useState<string[]>([])
+  const [columnsToCheck, setColumnsToCheck] = useState<string[]>([])
 
   const unmatchedHolds = inspectData.unmatched_hold_names || []
   const availableFields = Object.keys(inspectData.available_ap_values || {})
@@ -98,7 +103,7 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
   }
   
   const toggleColumn = (column: string) => {
-    setColumnsToUpdate(prev => 
+    setColumnsToCheck(prev => 
       prev.includes(column) 
         ? prev.filter(c => c !== column)
         : [...prev, column]
@@ -109,24 +114,26 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
     setIsProcessing(true)
     
     try {
-      // Prepare date stamping config
-      const dateStampingConfig = dateStampingEnabled ? {
+      // Prepare accounting period adjustment config
+      const adjustmentConfig = adjustmentEnabled ? {
         enabled: true,
+        cutoff_date: cutoffDate,
+        new_date: newDate,
         apply_to_tabs: applyToTabs,
-        columns_to_update: columnsToUpdate,
-        stamp_date: stampDate
+        columns_to_check: columnsToCheck
       } : {
         enabled: false,
+        cutoff_date: null,
+        new_date: null,
         apply_to_tabs: [],
-        columns_to_update: [],
-        stamp_date: null
+        columns_to_check: []
       }
       
-      // Save mapping with manual hold mappings and date stamping config
+      // Save mapping with manual hold mappings and accounting period adjustment config
       await saveMapping(runId, {
         mapping: { account_name: detectedAccountColumn },
         manual_hold_mappings: manualHoldMappings,
-        date_stamping: dateStampingConfig
+        accounting_period_adjustment: adjustmentConfig
       })
 
       // Run processing
@@ -145,24 +152,26 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
     setIsProcessing(true)
     
     try {
-      // Prepare date stamping config (same as Run Processing)
-      const dateStampingConfig = dateStampingEnabled ? {
+      // Prepare accounting period adjustment config (same as Run Processing)
+      const adjustmentConfig = adjustmentEnabled ? {
         enabled: true,
+        cutoff_date: cutoffDate,
+        new_date: newDate,
         apply_to_tabs: applyToTabs,
-        columns_to_update: columnsToUpdate,
-        stamp_date: stampDate
+        columns_to_check: columnsToCheck
       } : {
         enabled: false,
+        cutoff_date: null,
+        new_date: null,
         apply_to_tabs: [],
-        columns_to_update: [],
-        stamp_date: null
+        columns_to_check: []
       }
       
       // Save mapping without manual mappings
       await saveMapping(runId, {
         mapping: { account_name: detectedAccountColumn },
         manual_hold_mappings: [],
-        date_stamping: dateStampingConfig
+        accounting_period_adjustment: adjustmentConfig
       })
 
       // Run processing
@@ -327,32 +336,48 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
         </div>
       )}
 
-      {/* Date Stamping Configuration */}
+      {/* Accounting Period Adjustment Configuration */}
       <div className="mb-6 p-5 bg-gray-50 border border-gray-300 rounded-lg">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-gray-900">Date Stamping (Optional)</h3>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Accounting Period Adjustment</h3>
+            <p className="text-xs text-gray-600 mt-1">Conditionally update dates before a cutoff to a new date</p>
+          </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
               className="sr-only peer"
-              checked={dateStampingEnabled}
-              onChange={(e) => setDateStampingEnabled(e.target.checked)}
+              checked={adjustmentEnabled}
+              onChange={(e) => setAdjustmentEnabled(e.target.checked)}
             />
             <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-400 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
           </label>
         </div>
 
-        {dateStampingEnabled && (
+        {adjustmentEnabled && (
           <div className="space-y-4">
-            {/* Date Picker */}
+            {/* Cutoff Date Picker */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date to Apply
+                Cutoff Date <span className="text-gray-500">(dates before this will be modified)</span>
               </label>
               <input
                 type="date"
-                value={stampDate}
-                onChange={(e) => setStampDate(e.target.value)}
+                value={cutoffDate}
+                onChange={(e) => setCutoffDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              />
+            </div>
+
+            {/* New Date Picker */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Date <span className="text-gray-500">(what to change old dates to)</span>
+              </label>
+              <input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               />
             </div>
@@ -384,16 +409,16 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
               </div>
             </div>
 
-            {/* Columns to Update */}
+            {/* Columns to Check */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date Columns to Update
+                Date Columns to Check
               </label>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={columnsToUpdate.includes('created_date')}
+                    checked={columnsToCheck.includes('created_date')}
                     onChange={() => toggleColumn('created_date')}
                     className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                   />
@@ -402,7 +427,7 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={columnsToUpdate.includes('modified_date')}
+                    checked={columnsToCheck.includes('modified_date')}
                     onChange={() => toggleColumn('modified_date')}
                     className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900"
                   />
@@ -412,20 +437,21 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
             </div>
 
             {/* Summary */}
-            {(applyToTabs.length > 0 || columnsToUpdate.length > 0) && (
+            {(applyToTabs.length > 0 || columnsToCheck.length > 0) && (
               <div className="mt-3 p-3 bg-white border border-gray-300 rounded text-sm">
                 <p className="text-gray-700">
-                  <strong>Summary:</strong> Will update{' '}
-                  {columnsToUpdate.length > 0 ? (
+                  <strong>Summary:</strong> Will change dates <strong>before {cutoffDate}</strong> to <strong>{newDate}</strong>
+                  {' '}in{' '}
+                  {columnsToCheck.length > 0 ? (
                     <>
                       <strong>
-                        {columnsToUpdate.map(c => c === 'created_date' ? 'Created Date' : 'Last Modified Date').join(' and ')}
+                        {columnsToCheck.map(c => c === 'created_date' ? 'Created Date' : 'Last Modified Date').join(' and ')}
                       </strong>
                     </>
                   ) : (
                     <em>no columns</em>
                   )}
-                  {' '}in{' '}
+                  {' '}for{' '}
                   {applyToTabs.length > 0 ? (
                     <>
                       <strong>
@@ -435,7 +461,8 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
                   ) : (
                     <em>no tabs</em>
                   )}
-                  {' '}to <strong>{stampDate}</strong>
+                  {'. '}
+                  <span className="text-gray-600">Dates on or after {cutoffDate} will remain unchanged.</span>
                 </p>
               </div>
             )}

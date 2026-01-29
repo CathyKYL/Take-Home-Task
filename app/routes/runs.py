@@ -347,14 +347,15 @@ async def confirm_mapping(run_id: UUID, request: MappingRequest):
             for m in request.manual_hold_mappings
         ]
         
-        # Convert date stamping config to dict format
-        date_stamping_dict = None
-        if request.date_stamping:
-            date_stamping_dict = {
-                "enabled": request.date_stamping.enabled,
-                "apply_to_tabs": request.date_stamping.apply_to_tabs,
-                "columns_to_update": request.date_stamping.columns_to_update,
-                "stamp_date": request.date_stamping.stamp_date
+        # Convert accounting period adjustment config to dict format
+        adjustment_dict = None
+        if request.accounting_period_adjustment:
+            adjustment_dict = {
+                "enabled": request.accounting_period_adjustment.enabled,
+                "cutoff_date": request.accounting_period_adjustment.cutoff_date,
+                "new_date": request.accounting_period_adjustment.new_date,
+                "apply_to_tabs": request.accounting_period_adjustment.apply_to_tabs,
+                "columns_to_check": request.accounting_period_adjustment.columns_to_check
             }
         
         # Save mapping to database
@@ -363,7 +364,7 @@ async def confirm_mapping(run_id: UUID, request: MappingRequest):
             confirmed_mapping=request.mapping,
             format_config=request.format_config or {},
             manual_hold_mappings=manual_mappings_list,
-            date_stamping_config=date_stamping_dict
+            date_stamping_config=adjustment_dict  # Stored in date_stamping_config_json column for now
         )
         
         update_run(run_id, {"status": "mapped"})

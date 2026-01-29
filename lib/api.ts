@@ -168,18 +168,19 @@ export interface ManualHoldMapping {
   value: string
 }
 
-export interface DateStampingConfig {
+export interface AccountingPeriodAdjustment {
   enabled: boolean
+  cutoff_date: string | null  // YYYY-MM-DD format - dates before this will be modified
+  new_date: string | null  // YYYY-MM-DD format - what to change old dates to
   apply_to_tabs: string[]  // 'ready_to_pay' | 'payment_on_hold'
-  columns_to_update: string[]  // 'created_date' | 'modified_date'
-  stamp_date: string | null  // YYYY-MM-DD format
+  columns_to_check: string[]  // 'created_date' | 'modified_date'
 }
 
 export interface MappingPayload {
   mapping: Record<string, string>  // e.g., { account_name: "Account Name" }
   format_config?: Record<string, any>
   manual_hold_mappings?: ManualHoldMapping[]
-  date_stamping?: DateStampingConfig
+  accounting_period_adjustment?: AccountingPeriodAdjustment
 }
 
 /**
