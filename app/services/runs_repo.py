@@ -1,6 +1,8 @@
 # Runs repository
 # Database operations for the runs table
 
+import json
+import numpy as np
 from typing import Optional, Dict, Any, List
 from datetime import date, datetime
 from uuid import UUID
@@ -11,6 +13,32 @@ from .supabase_client import get_client
 class RunsRepoError(Exception):
     """Custom exception for runs repository operations"""
     pass
+
+
+def _convert_to_json_serializable(obj: Any) -> Any:
+    """
+    Convert numpy/pandas types to native Python types for JSON serialization.
+    
+    Args:
+        obj: Any object that might contain numpy/pandas types
+        
+    Returns:
+        JSON-serializable version of the object
+    """
+    if isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32, np.float16)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: _convert_to_json_serializable(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_convert_to_json_serializable(item) for item in obj]
+    elif hasattr(obj, 'item'):  # Handle numpy scalar types
+        return obj.item()
+    else:
+        return obj
 
 
 def create_run(upload_date: date) -> Dict[str, Any]:
@@ -90,12 +118,21 @@ def update_run(run_id: UUID, updates: Dict[str, Any]) -> Dict[str, Any]:
     try:
         client: Client = get_client()
         
-        # Ensure JSON fields are properly serialized
-        for key in ['detected_schema_json', 'suggested_mapping_json', 
-                    'confirmed_mapping_json', 'format_config_json', 'run_summary_json']:
+        # Ensure JSON fields are properly serialized (convert numpy/pandas types)
+        json_fields = [
+            'detected_schema_json', 
+            'suggested_mapping_json', 
+            'confirmed_mapping_json', 
+            'format_config_json', 
+            'run_summary_json',
+            'manual_hold_mappings_json',
+            'audit_trail_json'
+        ]
+        
+        for key in json_fields:
             if key in updates and updates[key] is not None:
-                # Supabase Python client handles JSON serialization automatically
-                pass
+                # Convert any numpy/pandas types to native Python types
+                updates[key] = _convert_to_json_serializable(updates[key])
         
         response = client.table("runs").update(updates).eq("id", str(run_id)).execute()
         
