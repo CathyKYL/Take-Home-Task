@@ -244,6 +244,25 @@ def save_run_summary(
     })
 
 
+def save_audit_trail(run_id: UUID, audit_entries: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Save audit trail entries for a run (convenience method).
+    
+    Args:
+        run_id: UUID of the run
+        audit_entries: List of audit trail entries with timestamps, actions, etc.
+        
+    Returns:
+        dict: Updated run record
+        
+    Raises:
+        RunsRepoError: If update fails
+    """
+    return update_run(run_id, {
+        "audit_trail_json": audit_entries
+    })
+
+
 def mark_run_failed(run_id: UUID, error_message: str) -> Dict[str, Any]:
     """
     Mark a run as failed with error message (convenience method).

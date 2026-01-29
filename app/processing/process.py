@@ -120,7 +120,7 @@ def process_run(
     format_config: Dict[str, Any],
     upload_date: date,
     manual_hold_mappings: List[Dict[str, str]] = None
-) -> Tuple[bytes, Dict[str, Any]]:
+) -> Tuple[bytes, Dict[str, Any], List[Dict[str, Any]]]:
     """
     Process AP Excel file: split into Ready_To_Pay and Payment_On_Hold,
     stamp dates, and generate output Excel.
@@ -137,11 +137,16 @@ def process_run(
         manual_hold_mappings: Manual mappings for unmatched hold names (optional)
         
     Returns:
-        Tuple of (output_excel_bytes, run_summary_dict)
+        Tuple of (output_excel_bytes, run_summary_dict, audit_entries)
         
     Raises:
         ProcessError: If processing fails or required columns are missing
     """
+    from datetime import datetime
+    
+    # Initialize audit trail
+    audit_entries = []
+    
     try:
         # Step 1: Read AP file into raw_df
         ap_file = io.BytesIO(ap_bytes)
@@ -156,12 +161,31 @@ def process_run(
         if raw_df.empty:
             raise ProcessError("AP file is empty")
         
+        # Audit: File loaded
+        audit_entries.append({
+            "timestamp": datetime.now().isoformat(),
+            "action": "File Loaded",
+            "action_type": "file_load",
+            "details": f"Loaded AP file with {len(raw_df)} transactions from sheet '{xl_file.sheet_names[0]}'",
+            "rows_affected": len(raw_df)
+        })
+        
         # Step 2: Copy raw_df to working_df (for splitting)
         # Use copy() to ensure we don't modify raw_df
         working_df = raw_df.copy()
         
         # Step 3: Load hold list into a set (for matching) and list (for output)
         hold_set, original_hold_values = load_hold_list(hold_bytes)
+        
+        # Audit: Hold list loaded
+        if hold_bytes:
+            audit_entries.append({
+                "timestamp": datetime.now().isoformat(),
+                "action": "Hold List Loaded",
+                "action_type": "hold_load",
+                "details": f"Loaded hold list with {len(hold_set)} unique vendors",
+                "rows_affected": len(hold_set)
+            })
         
         # Step 4: Validate required mapping
         if "account_name" not in mapping:
@@ -181,6 +205,7 @@ def process_run(
         )
         
         # Step 5.5: Apply manual hold mappings (if any)
+        manual_hold_count = 0
         if manual_hold_mappings:
             for mapping_rule in manual_hold_mappings:
                 field_name = mapping_rule.get("field")
@@ -190,11 +215,40 @@ def process_run(
                 if field_name and field_value and field_name in working_df.columns:
                     # Mark rows with matching field value as on hold
                     manual_hold_mask = working_df[field_name].astype(str) == str(field_value)
+                    manual_hold_count += manual_hold_mask.sum()
                     on_hold_mask = on_hold_mask | manual_hold_mask
+            
+            # Audit: Manual mappings applied
+            if manual_hold_count > 0:
+                audit_entries.append({
+                    "timestamp": datetime.now().isoformat(),
+                    "action": "Override Applied",
+                    "action_type": "manual_mapping",
+                    "details": f"Applied {len(manual_hold_mappings)} manual vendor mappings, affecting {manual_hold_count} additional transactions",
+                    "rows_affected": manual_hold_count
+                })
         
         # Step 6: Split into ready_df and hold_df
         ready_df = working_df[~on_hold_mask].copy()
         hold_df = working_df[on_hold_mask].copy()
+        
+        # Audit: Hold detection complete
+        audit_entries.append({
+            "timestamp": datetime.now().isoformat(),
+            "action": "Hold Detection",
+            "action_type": "hold_detection",
+            "details": f"Matched {len(hold_df)} payments to hold list",
+            "rows_affected": len(hold_df)
+        })
+        
+        # Audit: Split processing
+        audit_entries.append({
+            "timestamp": datetime.now().isoformat(),
+            "action": "Split Processing",
+            "action_type": "split_processing",
+            "details": f"Split into: {len(ready_df)} ready to pay, {len(hold_df)} on hold",
+            "rows_affected": len(raw_df)
+        })
         
         # Step 7: Handle Created Date and Last Modified Date columns
         # Determine column names to use
@@ -214,6 +268,16 @@ def process_run(
         # Set date values (date only, no time) for Payment_On_Hold
         hold_df[created_col] = upload_date
         hold_df[modified_col] = upload_date
+        
+        # Audit: Date stamping
+        total_stamped = len(ready_df) + len(hold_df)
+        audit_entries.append({
+            "timestamp": datetime.now().isoformat(),
+            "action": "Date Stamping",
+            "action_type": "date_stamp",
+            "details": f"Stamped '{created_col}' and '{modified_col}' with {upload_date} on {total_stamped} transactions",
+            "rows_affected": total_stamped
+        })
         
         # Step 8: Prepare Hold_List tab (use ORIGINAL values, not normalized)
         if original_hold_values:
@@ -257,7 +321,16 @@ def process_run(
             raw_df=raw_df
         )
         
-        return output_bytes, run_summary
+        # Audit: Processing complete
+        audit_entries.append({
+            "timestamp": datetime.now().isoformat(),
+            "action": "Processing Complete",
+            "action_type": "processing_complete",
+            "details": "Generated output Excel file with 4 tabs: Ready_To_Pay, Payment_On_Hold, Hold_List, Raw",
+            "rows_affected": None
+        })
+        
+        return output_bytes, run_summary, audit_entries
         
     except ProcessError:
         raise

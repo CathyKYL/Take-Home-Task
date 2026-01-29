@@ -421,7 +421,7 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
         import time
         start_time = time.time()
         
-        output_bytes, run_summary_dict = process_run(
+        output_bytes, run_summary_dict, audit_entries = process_run(
             ap_bytes=ap_bytes,
             hold_bytes=hold_bytes,
             mapping=confirmed_mapping,
@@ -451,6 +451,10 @@ async def process_and_generate_output(run_id: UUID, request: ProcessRequest = No
             run_summary=run_summary_dict,
             output_path=output_path
         )
+        
+        # Save audit trail
+        from app.services import save_audit_trail
+        save_audit_trail(run_id=run_id, audit_entries=audit_entries)
         
         return ProcessResponse(
             run_id=run_id,
@@ -530,14 +534,17 @@ async def download_output(run_id: UUID):
                 "holds": run_summary.get("hold_list_rows", 0)
             }
         
+        # Get audit trail from database
+        audit_trail = run_record.get("audit_trail_json") or []
+        
         return DownloadResponse(
             run_id=run_id,
             status=run_record["status"],
             excel_file_url=signed_url,  # Frontend expects this field name
             pdf_file_url=None,  # Not implemented yet
-            audit_trail_url=None,  # Not implemented yet
+            audit_trail_url=None,  # Not implemented yet (could generate PDF later)
             summary=summary,
-            audit_trail=None,  # Not implemented yet
+            audit_trail=audit_trail,  # ✅ Now includes real audit trail from database
             download_url=signed_url,  # Keep for backward compatibility
             expires_in_seconds=expires_in,
             file_name=file_name,

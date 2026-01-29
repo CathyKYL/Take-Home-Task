@@ -19,6 +19,7 @@ from .runs_repo import (
     save_detected_schema,
     save_mapping,
     save_run_summary,
+    save_audit_trail,
     mark_run_failed,
     RunsRepoError,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "save_detected_schema",
     "save_mapping",
     "save_run_summary",
+    "save_audit_trail",
     "mark_run_failed",
     "RunsRepoError",
 ]
