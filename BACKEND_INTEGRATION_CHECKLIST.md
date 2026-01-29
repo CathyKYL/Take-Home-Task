@@ -263,3 +263,4 @@ Return both - inline summary (last 20 entries) + full file download URL
 
 See `AUDIT_TRAIL_REQUIREMENTS.md` for detailed technical specifications on the audit trail implementation.
 
+

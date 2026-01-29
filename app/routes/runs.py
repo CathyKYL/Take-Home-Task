@@ -206,11 +206,22 @@ async def inspect_run(run_id: UUID):
                 account_column = inspection_result["suggested_mapping"].get("account_name")
                 
                 if account_column and account_column in inspection_result["columns"]:
-                    # Extract AP account names from preview rows
-                    ap_account_names = []
-                    for row in inspection_result["preview_rows"]:
-                        if account_column in row and row[account_column]:
-                            ap_account_names.append(str(row[account_column]))
+                    # Extract ALL unique AP account names from full file (not just preview)
+                    try:
+                        import io
+                        import pandas as pd
+                        ap_file = io.BytesIO(ap_bytes)
+                        ap_df = pd.read_excel(ap_file, sheet_name=inspection_result["selected_sheet"])
+                        
+                        if account_column in ap_df.columns:
+                            # Get all unique non-null account names from full file
+                            ap_account_names = ap_df[account_column].dropna().unique().tolist()
+                            ap_account_names = [str(name) for name in ap_account_names if name]
+                        else:
+                            ap_account_names = []
+                    except Exception as e:
+                        print(f"Warning: Could not read full AP file for matching: {str(e)}")
+                        ap_account_names = []
                     
                     # Find unmatched holds
                     unmatched_hold_names = find_unmatched_holds(

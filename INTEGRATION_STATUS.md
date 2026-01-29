@@ -293,3 +293,4 @@ allow_origins=[
 
 Once backend is accessible via HTTPS with CORS configured, this will work perfectly on Netlify! 🎉
 
+

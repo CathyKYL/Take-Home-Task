@@ -2,6 +2,13 @@
   command = "npm run build"
   publish = "out"
 
+[build.environment]
+  # Skip Python for frontend-only build
+  MISE_SKIP_INSTALL = "python"
+  # Disable secrets scanning for frontend build (no secrets needed)
+  SECRETS_SCAN_ENABLED = "false"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
 

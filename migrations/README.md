@@ -38,3 +38,4 @@ supabase db push
 | `error_message` | TEXT | Error details if failed |
 
 
+

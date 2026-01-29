@@ -365,3 +365,4 @@ The frontend is **ready** to display audit trails. The backend needs to:
 
 This maintains complete transparency and audit compliance while never modifying raw data.
 
+
