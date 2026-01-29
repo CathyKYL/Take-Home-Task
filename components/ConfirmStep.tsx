@@ -129,14 +129,14 @@ export default function ConfirmStep({ runId, inspectData, onNext, onSkip }: Conf
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
-        Confirm / Manual Match
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        Confirm & Continue
       </h2>
 
-      {/* Auto-detected info */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-sm text-blue-800">
-          ✓ Auto-detected <strong>Account Name</strong> column: <strong>{detectedAccountColumn}</strong>
+      {/* Description */}
+      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+        <p className="text-sm text-gray-700">
+          Before we finalize the results, take a moment to review and make sure everything looks right.
         </p>
       </div>
 

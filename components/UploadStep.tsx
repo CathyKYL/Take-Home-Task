@@ -51,7 +51,7 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
           <svg
             className="w-5 h-5 text-white"
@@ -68,6 +68,14 @@ export default function UploadStep({ onNext, onError }: UploadStepProps) {
           </svg>
         </div>
         <h2 className="text-lg font-semibold text-gray-800">File Upload</h2>
+      </div>
+
+      {/* Description */}
+      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+        <p className="text-sm text-gray-700">
+          An agent that automatically sorts your accounting records into "Ready for Payment" or "Payment Hold."
+          Simply upload your files and receive accurately sorted results within a minute.
+        </p>
       </div>
 
       {/* Input Files Section */}

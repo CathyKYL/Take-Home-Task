@@ -136,7 +136,7 @@ class AuditTrailPDF:
         story = []
         
         # Title
-        title = Paragraph("Processing Audit Trail Report", self.styles['CustomTitle'])
+        title = Paragraph("AP Sorting Agent - Audit Trail", self.styles['CustomTitle'])
         story.append(title)
         
         # Subtitle

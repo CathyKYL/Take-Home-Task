@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { getDownload, DownloadResponse, AuditTrailEntry } from '@/lib/api'
-import { MOCK_DOWNLOAD_DATA } from './MockDataProvider'
 
 interface DownloadStepProps {
   runId: string
@@ -20,21 +19,10 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
         setIsLoading(true)
         setError(null)
         
-        // Check if mock mode is enabled
-        const mockMode = localStorage.getItem('mockMode') === 'true' || runId === 'mock-run-123'
-        
-        if (mockMode) {
-          // Use mock data
-          setTimeout(() => {
-            setDownloadData(MOCK_DOWNLOAD_DATA as DownloadResponse)
-            setIsLoading(false)
-          }, 1000) // Simulate network delay
-        } else {
-          // Real API call
-          const data = await getDownload(runId)
-          setDownloadData(data)
-          setIsLoading(false)
-        }
+        // Real API call
+        const data = await getDownload(runId)
+        setDownloadData(data)
+        setIsLoading(false)
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message)
@@ -163,47 +151,6 @@ export default function DownloadStep({ runId, onReset }: DownloadStepProps) {
           </div>
         </div>
       </div>
-
-      {/* Run Summary (if available) */}
-      {downloadData?.summary && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Run Summary</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            {downloadData.summary.total_payments !== undefined && (
-              <div>
-                <span className="text-gray-600">Total Payments:</span>
-                <span className="ml-2 font-medium text-gray-800">
-                  {downloadData.summary.total_payments}
-                </span>
-              </div>
-            )}
-            {downloadData.summary.matched !== undefined && (
-              <div>
-                <span className="text-gray-600">Matched:</span>
-                <span className="ml-2 font-medium text-green-600">
-                  {downloadData.summary.matched}
-                </span>
-              </div>
-            )}
-            {downloadData.summary.unmatched !== undefined && (
-              <div>
-                <span className="text-gray-600">Unmatched:</span>
-                <span className="ml-2 font-medium text-orange-600">
-                  {downloadData.summary.unmatched}
-                </span>
-              </div>
-            )}
-            {downloadData.summary.holds !== undefined && (
-              <div>
-                <span className="text-gray-600">On Hold:</span>
-                <span className="ml-2 font-medium text-red-600">
-                  {downloadData.summary.holds}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Download Links */}
       <div className="mb-6">
